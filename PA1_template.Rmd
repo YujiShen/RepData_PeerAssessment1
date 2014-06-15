@@ -21,6 +21,7 @@ median_step <- median(total_step_per_day)
 ```
 
 *The mean of steps taken each day is `r mean_step`.
+
 *The median of steps taken each day is `r median_step`.
 
 ## What is the average daily activity pattern?
@@ -65,7 +66,9 @@ new_median_step <- median(new_total_step_per_day)
 ```
 
 After inputting the missing value:
+
 *The mean of steps taken each day is `r new_mean_step`.
+
 *The median of steps taken each day is `r new_median_step`.
 
 ## Are there differences in activity patterns between weekdays and weekends?
