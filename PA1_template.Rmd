@@ -10,7 +10,7 @@ data <- transform(data, date = as.Date(date, "%Y-%m-%d"))
 
 ## What is mean total number of steps taken per day?
 ```{r}
-good <- data[complete.cases(data), ]
+good <- data[complete.cases(data$steps), ]
 subdate <- split(good, good$date)
 total_step_per_day <- sapply(subdate, function(x){
         sum(x$steps)
@@ -20,6 +20,9 @@ mean_step <- mean(total_step_per_day)
 median_step <- median(total_step_per_day)
 ```
 
+*The mean of steps taken each day is `r mean_step`.
+*The median of steps taken each day is `r median_step`.
+
 ## What is the average daily activity pattern?
 ```{r}
 subinterval <- split(good, good$interval)
@@ -27,16 +30,21 @@ ave_step_allday <- sapply(subinterval, function(x){
         mean(x$steps)
 })
 plot(unique(good$interval), ave_step_allday, type="l", xlab="5-minute interval", ylab="average number of steps", main = "Average daily activity pattern")
-ave_step_allday[max(ave_step_allday)]
+max_interval <- ave_step_allday[max(ave_step_allday)]
 ```
+
+*The 5-minute interval that, on average, contains the maximum number of steps is `r max_interval`.
 
 
 ## Imputing missing values
+The strategy for imputing missing data is: 
+Using for loop to traverse the dataset, when encounter the "NA", incert the mean for that 5-minute interval as its steps.
+
 ```{r}
 total_NA <- nrow(data) - nrow(good)
 new_data <- data.frame()
-for (i in 1:nrow(data)){
-        temp_row <- data[i, ]
+for (i in 1:nrow(good)){
+        temp_row <- good[i, ]
         if(is.na(temp_row$steps)){
                 temp_interval <- temp_row$interval/5 + 1
                temp_step <- ave_step_allday[temp_interval]
@@ -44,7 +52,9 @@ for (i in 1:nrow(data)){
         }
         new_data <- rbind(new_data, temp_row)     
 }
+```
 
+```{r}
 new_subdate <- split(new_data, new_data$date)
 new_total_step_per_day <- sapply(new_subdate, function(x){
         sum(x$steps)
@@ -54,9 +64,13 @@ new_mean_step <- mean(new_total_step_per_day)
 new_median_step <- median(new_total_step_per_day)
 ```
 
+After inputting the missing value:
+*The mean of steps taken each day is `r new_mean_step`.
+*The median of steps taken each day is `r new_median_step`.
+
 ## Are there differences in activity patterns between weekdays and weekends?
 ```{r}
-new_data$weektime <- as.factor(ifelse(weekdays(data$date) %in% c("Saturday","Sunday"),"weekend", "weekday"))
+new_data$weektime <- as.factor(ifelse(weekdays(new_data$date) %in% c("Saturday","Sunday"),"weekend", "weekday"))
 par(mfrow=c(2,1))
 
 data_weekday <- new_data[new_data$weektime=="weekday",]
@@ -73,7 +87,5 @@ weekend_step <- sapply(subweekend, function(x){
 
 plot(unique(data_weekday$interval), weekday_step)
 plot(unique(data_weekdend$interval), weekend_step)
-
-
 
 ```
