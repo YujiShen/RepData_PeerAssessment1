@@ -1,6 +1,7 @@
 # Reproducible Research: Peer Assessment 1
 
 
+
 ## Loading and preprocessing the data
 
 
@@ -17,6 +18,7 @@ subdate <- split(good, good$date)
 total_step_per_day <- sapply(subdate, function(x){
         sum(x$steps)
 })
+par(mfrow=c(1,1))
 hist(total_step_per_day, main="Histogram of total number of steps taken each day", xlab="steps")
 ```
 
@@ -28,6 +30,7 @@ median_step <- median(total_step_per_day)
 ```
 
 *The mean of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
+
 *The median of steps taken each day is 10765.
 
 ## What is the average daily activity pattern?
@@ -37,6 +40,7 @@ subinterval <- split(good, good$interval)
 ave_step_allday <- sapply(subinterval, function(x){
         mean(x$steps)
 })
+par(mfrow=c(1,1))
 plot(unique(good$interval), ave_step_allday, type="l", xlab="5-minute interval", ylab="average number of steps", main = "Average daily activity pattern")
 ```
 
@@ -74,6 +78,7 @@ new_subdate <- split(new_data, new_data$date)
 new_total_step_per_day <- sapply(new_subdate, function(x){
         sum(x$steps)
 })
+par(mfrow=c(1,1))
 hist(new_total_step_per_day, main="Histogram of new total number of steps taken each day", xlab="steps")
 ```
 
@@ -85,14 +90,16 @@ new_median_step <- median(new_total_step_per_day)
 ```
 
 After inputting the missing value:
+
 *The mean of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
+
 *The median of steps taken each day is 10765.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 ```r
 new_data$weektime <- as.factor(ifelse(weekdays(new_data$date) %in% c("Saturday","Sunday"),"weekend", "weekday"))
-par(mfrow=c(2,1))
+
 
 data_weekday <- new_data[new_data$weektime=="weekday",]
 subweekday <- split(data_weekday, data_weekday$interval)
@@ -100,25 +107,30 @@ weekday_step <- sapply(subweekday, function(x){
         mean(x$steps)
 })
 
-data_weekdend <- new_data[new_data$weektime=="weekdend",]
+data_weekdend <- new_data[new_data$weektime=="weekend",]
 subweekend <- split(data_weekdend, data_weekdend$interval)
 weekend_step <- sapply(subweekend, function(x){
         mean(x$steps)
 })
-
-plot(unique(data_weekday$interval), weekday_step)
-plot(unique(data_weekdend$interval), weekend_step)
 ```
 
-```
-## Warning: no non-missing arguments to min; returning Inf
-## Warning: no non-missing arguments to max; returning -Inf
-## Warning: no non-missing arguments to min; returning Inf
-## Warning: no non-missing arguments to max; returning -Inf
+
+```r
+par(mfrow=c(2,1), mar=c(0,0,0,0), oma = c(3, 3, 2, 2))
+plot(unique(data$interval), weekday_step, type="l", axes=F)
+grid(NULL,NULL, lty=2)
+box("plot")
+mtext("Weekday", side=4, line=0)
+axis(2, at=seq(0,200,50), cex.axis=0.7,)
+plot(unique(data$interval), weekend_step, type="l", axes=F)
+mtext("Weekend", side=4, line=0)
+axis(2, at=seq(0,200,50), cex.axis=0.7)
+axis(1, at=seq(0,2500,500), cex.axis=0.7)
+grid(NULL,NULL, lty=2)
+box()
+mtext("Activity patterns comparision", side=3, outer=T, font=2, line=0.5)
+mtext("Interval", side =1, outer = T, line=2)
+mtext("Number of steps", side = 2, outer=T, line=2)
 ```
 
-```
-## Error: need finite 'xlim' values
-```
-
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
