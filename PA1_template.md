@@ -29,9 +29,20 @@ mean_step <- mean(total_step_per_day)
 median_step <- median(total_step_per_day)
 ```
 
-*The mean of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
+### Use tapply will be fairly easy
 
-*The median of steps taken each day is 10765.
+```r
+ave.all <- tapply(data$steps, data$interval, mean, na.rm = T)
+head(ave.all)
+```
+
+```
+##       0       5      10      15      20      25 
+## 1.71698 0.33962 0.13208 0.15094 0.07547 2.09434
+```
+
+* The mean of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
+* The median of steps taken each day is 10765.
 
 ## What is the average daily activity pattern?
 
@@ -44,19 +55,20 @@ par(mfrow=c(1,1))
 plot(unique(good$interval), ave_step_allday, type="l", xlab="5-minute interval", ylab="average number of steps", main = "Average daily activity pattern")
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
 
 ```r
-max_interval <- ave_step_allday[max(ave_step_allday)]
+max_interval <- max(ave_step_allday)
 ```
 
-*The 5-minute interval that, on average, contains the maximum number of steps is 56.3019.
+* The 5-minute interval that, on average, contains the maximum number of steps is 206.1698.
 
 
 ## Imputing missing values
 The strategy for imputing missing data is: 
 Using for loop to traverse the dataset, when encounter the "NA", incert the mean for that 5-minute interval as its steps.
 
+### Do not use for loop, so slow!
 
 ```r
 total_NA <- nrow(data) - nrow(good)
@@ -72,17 +84,33 @@ for (i in 1:nrow(good)){
 }
 ```
 
+### Use merge and assign instead
 
 ```r
-new_subdate <- split(new_data, new_data$date)
-new_total_step_per_day <- sapply(new_subdate, function(x){
-        sum(x$steps)
-})
+new_data <- data
+tf.step <- is.na(new_data$steps)
+na.step <- data[tf.step, c("steps", "interval")]
+na.step$row <- as.integer(rownames(na.step))
+
+interval <- as.integer(unlist(labels(ave_step_allday)))
+ave.df <- as.data.frame(cbind(ave_step_allday, interval))
+
+merged <- merge(na.step, ave.df, all.x = T, by = "interval")
+
+order <- merged[order(merged$row), ]
+
+new_data$steps[tf.step] <- order$ave_step_allday
+```
+
+
+
+```r
+new_total_step_per_day <- tapply(new_data$steps, new_data$date, sum)
 par(mfrow=c(1,1))
 hist(new_total_step_per_day, main="Histogram of new total number of steps taken each day", xlab="steps")
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
 
 ```r
 new_mean_step <- mean(new_total_step_per_day)
@@ -91,38 +119,31 @@ new_median_step <- median(new_total_step_per_day)
 
 After inputting the missing value:
 
-*The mean of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
+* The mean of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
 
-*The median of steps taken each day is 10765.
+* The median of steps taken each day is 1.0766 &times; 10<sup>4</sup>.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 ```r
 new_data$weektime <- as.factor(ifelse(weekdays(new_data$date) %in% c("Saturday","Sunday"),"weekend", "weekday"))
+library(lattice)
+all.ave <- merge(new_data, ave.df, all.x = T, by = "interval")
 
-
-data_weekday <- new_data[new_data$weektime=="weekday",]
-subweekday <- split(data_weekday, data_weekday$interval)
-weekday_step <- sapply(subweekday, function(x){
-        mean(x$steps)
-})
-
-data_weekdend <- new_data[new_data$weektime=="weekend",]
-subweekend <- split(data_weekdend, data_weekdend$interval)
-weekend_step <- sapply(subweekend, function(x){
-        mean(x$steps)
-})
+week.ave <- tapply(all.ave$steps, list(all.ave$interval, all.ave$weektime), mean)
+week.ave <- as.data.frame(week.ave)
+week.ave$interval <- rownames(week.ave)
 ```
 
 
 ```r
 par(mfrow=c(2,1), mar=c(0,0,0,0), oma = c(3, 3, 2, 2))
-plot(unique(data$interval), weekday_step, type="l", axes=F)
+plot(week.ave$interval, week.ave$weekday, type="l", axes=F)
 grid(NULL,NULL, lty=2)
 box("plot")
 mtext("Weekday", side=4, line=0)
 axis(2, at=seq(0,200,50), cex.axis=0.7,)
-plot(unique(data$interval), weekend_step, type="l", axes=F)
+plot(week.ave$interval, week.ave$weekend, type="l", axes=F)
 mtext("Weekend", side=4, line=0)
 axis(2, at=seq(0,200,50), cex.axis=0.7)
 axis(1, at=seq(0,2500,500), cex.axis=0.7)
@@ -133,4 +154,4 @@ mtext("Interval", side =1, outer = T, line=2)
 mtext("Number of steps", side = 2, outer=T, line=2)
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9.png) 
